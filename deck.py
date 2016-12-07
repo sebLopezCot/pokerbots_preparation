@@ -5,7 +5,8 @@ import numpy as np
 
 class Cards:
 
-	indexes = set(['2','3','4','5','6','7','8','9','J','Q','K','A'])
+	indeces = set(['2','3','4','5','6','7','8','9','J','Q','K','A'])
+	ranks = {'2': 0,'3': 1,'4': 2,'5': 3,'6': 4,'7': 5,'8': 6,'9': 7,'J': 8,'Q': 9,'K': 10,'A': 11}
 	suits = set(['H','D','C','S'])
 	kinds = set([('2', 'H'), ('2', 'D'), ('2', 'C'), ('2', 'S'), ('3', 'H'), ('3', 'D'), 
 	('3', 'C'), ('3', 'S'), ('4', 'H'), ('4', 'D'), ('4', 'C'), ('4', 'S'), ('5', 'H'), 
@@ -18,6 +19,10 @@ class Cards:
 	@staticmethod
 	def get_all_cards():
 		return list(Cards.kinds)
+
+	@staticmethod
+	def get_rank(card):
+		return Cards.ranks[card[0]]
 
 
 class Deck:
