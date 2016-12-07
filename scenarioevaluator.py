@@ -150,7 +150,13 @@ class ScenarioEvaluator:
 
 	@staticfunction
 	def test_royal(hand, table_cards):
-		pass
+		royals = Cards.royals.copy()
+		h = set([c[0] for c in hand])
+		t = set([c[0] for c in table_cards])
+
+		comb = h.union(t)
+
+		return len(royals.intersection(comb)) == len(royals)
 
 	@staticfunction
 	def rank_hands(hands, table_cards):
