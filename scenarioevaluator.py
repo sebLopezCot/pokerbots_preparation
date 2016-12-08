@@ -51,14 +51,21 @@ class FourOfAKind(Combo):
 		self.cards_involved = [card_ind]
 
 class Straight(Combo):
-	pass
+	
+	def __init__(self, card_ind):
+		Combo.__init__(self)
+		self.cards_involved = [card_ind]
 
 class Flush(Combo):
 	pass
 
 class StraightFlush(CascadeCombo):
-	pass
+	
+	def __init__(self, straight_card):
+		self.combos = [Straight(straight_card), Flush()]
 
+class RoyalFlush(CascadeCombo):
+	pass
 
 class ScenarioEvaluator:
 
@@ -142,11 +149,56 @@ class ScenarioEvaluator:
 
 	@staticfunction
 	def test_straight(hand, table_cards):
-		pass
+		freq = Counter()
+
+		for card in hand:
+			freq[card[0]] += 1
+
+		for card in table_cards:
+			freq[card[0]] += 1
+
+		lcs_index = -1
+		lcs_length = 0
+		for i in range(len(freq)-1, -1, -1):
+			if lcs_length == 0:
+				lcs_index = i
+			else:
+				if Cards.get_rank(freq.keys()[i]) == Cards.get_rank(freq.keys()[i+1]) - 1:
+					lcs_length += 1
+
+					if lcs_length == 5:
+						break
+				else:
+					lcs_length = 0
+					lcs_index = -1
+
+		if lcs_length == 5:
+			return freq.keys()[lcs_index]
+		elif lcs_length == 4 and freq.keys()[lcs_index] == '5' and freq['A'] > 0:
+			return freq.keys()[lcs_index]
+		else:
+			return None
+
 
 	@staticfunction
 	def test_flush(hand, table_cards):
-		pass
+		freq = Counter()
+
+		for card in hand:
+			suit = card[1]
+			freq[suit] += 1
+
+		for card in table_cards:
+			suit = card[1]
+			freq[suit] += 1
+
+		flush = False
+		for suit in freq:
+			if freq[suit] == 5:
+				flush = True
+				break
+
+		return flush
 
 	@staticfunction
 	def test_royal(hand, table_cards):
@@ -170,16 +222,20 @@ class ScenarioEvaluator:
 		s = ScenarioEvaluator.test_straight(hand, table_cards)
 		f = ScenarioEvaluator.test_flush(hand, table_cards)
 
-		if s and f:
+		if s is not None and f:
 			if ScenarioEvaluator.test_royal(hand, table_cards):
 				rank = max(rank, 10)
+				combos.append(RoyalFlush())
 			else:
 				rank = max(rank, 9)
+				combos.append(StraightFlush(s))
 		else:
 			if f:
 				rank = max(rank, 6)
-			if s:
+				combos.append(Flush())
+			if s is not None:
 				rank = max(rank, 5)
+				combos.append(Straight(s))
 
 		pairs = ScenarioEvaluator.get_pairs(hand, table_cards)
 
@@ -192,18 +248,26 @@ class ScenarioEvaluator:
 
 		if two is not None:
 			rank = max(rank, 3)
+			combos.append(TwoPair(two))
 
 		if full_house:
 			rank = max(rank, 7)
+			combos.append(FullHouse(one, three))
 		else:
 			if one is not None:
 				rank = max(rank, 2)
+				combos.append(Pair(one))
 
 			if three is not None:
 				rank = max(rank, 4)
+				combos.append(ThreeOfAKind(three))
 
 		if four is not None:
 			rank = max(rank, 8)
+			combos.append(FourOfAKind(four))
+
+
+		return (rank, combos)
 
 
 
