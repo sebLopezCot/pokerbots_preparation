@@ -24,11 +24,13 @@ class Pair(Combo):
 		Combo.__init__(self)
 		self.cards_involved = [card_ind]
 
-class TwoPair(Combo):
+class TwoPair(CascadeCombo):
 
-	def __init__(self, card_inds):
+	def __init__(self, pair_cards):
 		Combo.__init__(self)
-		self.cards_involved = list(card_inds)
+		pair1 = Pair(pair_cards[0])
+		pair2 = Pair(pair_cards[1])
+		self.combos = [pair1, pair2]
 
 class ThreeOfAKind(Combo):
 
@@ -74,18 +76,18 @@ class ScenarioEvaluator:
 	@staticfunction
 	def test_high_card(hands):
 		max_card_rank = -1
-		winner_indeces = set()
+		winner_indices = set()
 
 		for i in range(len(hands)):
 			hand = hands[i]
 			rank = max(Cards.get_rank(hand[0]), Cards.get_rank(hand[1]))
 			if rank == max_card_rank:
-				winner_indeces.add(i)
+				winner_indices.add(i)
 			elif rank > max_card_rank:
-				winner_indeces = set([i])
+				winner_indices = set([i])
 				max_card_rank = rank
 
-		return winner_indeces
+		return winner_indices
 
 	# tests for pair, 2 pair, 3 of a kind, full house, and 4 of a kind
 	# input: hand of cards, cards on table
@@ -210,9 +212,59 @@ class ScenarioEvaluator:
 
 		return len(royals.intersection(comb)) == len(royals)
 
+	# input: hands and table cards
+	# output: tuple of indices of winning hands
 	@staticfunction
 	def rank_hands(hands, table_cards):
-		pass
+		max_card_rank = 1
+		winner_indices = set()
+
+		ranks = [ScenarioEvaluator.rank_hand(hand, table_cards) for hand in hands]
+
+		for i in range(len(hands)):
+			hand = hands[i]
+			rank = ranks[i][0]
+			if rank == max_card_rank:
+				winner_indices.add(i)
+			elif rank > max_card_rank:
+				winner_indices = set([i])
+				max_card_rank = rank
+
+		if len(winner_indices) > 1:
+			# break ties
+			l_winner_indices = list(winner_indices)
+			# check if combos is empty, if so, check high card
+			combos = ranks[l_winner_indices[0]][1]
+			if len(combos) < 1:
+				winner_indices = set([l_winner_indices[j] for j in ScenarioEvaluator.test_high_card([hands[i] for i in l_winner_indices])])
+			# if not, check whether cascade combo or regular combo
+			elif len(combos) == 1:
+				if isinstance(combos[0], Combo):
+					# if regular combo, check only combo for higher combo
+					second_rank = sorted([ranks[l_winner_indices[i]][1][0] for i in range(len(l_winner_indices))], key=lambda comb: comb.highest_card_rank(), reverse=True)
+					max_val_second_rank = second_rank[0].highest_card_rank()
+					winner_indices = set()
+					for i in l_winner_indices:
+						if ranks[i][1][0].highest_card_rank() == max_val_second_rank:
+							winner_indices.add(i)
+
+				elif isinstance(combos[0], CascadeCombo):
+					# if cascade, check in order which has higher combo
+					second_rank = sorted([ranks[l_winner_indices[i]][1][0] for i in range(len(l_winner_indices))], key=lambda comb: comb.highest_card_ranks(), reverse=True)
+					max_val_second_rank = second_rank[0].highest_card_ranks()
+					winner_indices = set()
+					for i in l_winner_indices:
+						is_a_winner = True
+						for j in range(len(max_val_second_rank)):
+							if rank[i][1][0][j] != max_val_second_rank[j]:
+								is_a_winner = False
+						if is_a_winner:
+							winner_indices.add(i)
+
+			# if still room left in 5 card best hand, check high card (CHECK THIS RULE FIRST, NOT SURE / HAVEN'T IMPLEMENTED)
+			# if still a tie, split the pot among players
+
+		return winner_indices
 
 	@staticfunction
 	def rank_hand(hand, table_cards):
