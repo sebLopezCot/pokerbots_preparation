@@ -69,7 +69,7 @@ class StraightFlush(CascadeCombo):
 class RoyalFlush(CascadeCombo):
 	pass
 
-class ScenarioEvaluator:
+class HandEvaluator:
 
 	# input: a list of hands of 2 cards
 	# output: a set of the indeces of the winners
@@ -219,7 +219,7 @@ class ScenarioEvaluator:
 		max_card_rank = 1
 		winner_indices = set()
 
-		ranks = [ScenarioEvaluator.rank_hand(hand, table_cards) for hand in hands]
+		ranks = [HandEvaluator.rank_hand(hand, table_cards) for hand in hands]
 
 		for i in range(len(hands)):
 			hand = hands[i]
@@ -236,7 +236,7 @@ class ScenarioEvaluator:
 			# check if combos is empty, if so, check high card
 			combos = ranks[l_winner_indices[0]][1]
 			if len(combos) < 1:
-				winner_indices = set([l_winner_indices[j] for j in ScenarioEvaluator.test_high_card([hands[i] for i in l_winner_indices])])
+				winner_indices = set([l_winner_indices[j] for j in HandEvaluator.test_high_card([hands[i] for i in l_winner_indices])])
 			# if not, check whether cascade combo or regular combo
 			elif len(combos) == 1:
 				if isinstance(combos[0], Combo):
@@ -271,11 +271,11 @@ class ScenarioEvaluator:
 		rank = 1 # 1 is worst
 		combos = []
 
-		s = ScenarioEvaluator.test_straight(hand, table_cards)
-		f = ScenarioEvaluator.test_flush(hand, table_cards)
+		s = HandEvaluator.test_straight(hand, table_cards)
+		f = HandEvaluator.test_flush(hand, table_cards)
 
 		if s is not None and f:
-			if ScenarioEvaluator.test_royal(hand, table_cards):
+			if HandEvaluator.test_royal(hand, table_cards):
 				rank = max(rank, 10)
 				combos.append(RoyalFlush())
 			else:
@@ -289,12 +289,12 @@ class ScenarioEvaluator:
 				rank = max(rank, 5)
 				combos.append(Straight(s))
 
-		pairs = ScenarioEvaluator.get_pairs(hand, table_cards)
+		pairs = HandEvaluator.get_pairs(hand, table_cards)
 
-		one = ScenarioEvaluator.test_pair(pairs)
-		two = ScenarioEvaluator.test_two_pair(pairs)
-		three = ScenarioEvaluator.test_three_of_a_kind(pairs)
-		four = ScenarioEvaluator.test_four_of_a_kind(pairs)
+		one = HandEvaluator.test_pair(pairs)
+		two = HandEvaluator.test_two_pair(pairs)
+		three = HandEvaluator.test_three_of_a_kind(pairs)
+		four = HandEvaluator.test_four_of_a_kind(pairs)
 
 		full_house = (one is not None and three is not None)
 
